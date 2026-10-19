@@ -18,7 +18,7 @@ SEED, N_PAIRS, L = 42, 400, 200          # simulation size and ancestor length
 SUB, INDEL = 0.15, 0.02                  # substitution prob per lineage, indel prob per site
 B, W, THETA = 40, 20, 10.0               # block size, extra Y window, near-optimal threshold
 MATCH, MIS, GAP = 1, -1, -2              # reference scoring used for every candidate
-SETTINGS = [(1, mm, g) for mm in (-1, -2) for g in (1, 2, 3, 4)]  # block-DP variants
+SETTINGS = [(1, mm, -g) for mm in (-1, -2) for g in (1, 2, 3, 4)]  # block-DP variants (gap penalties are negative)
 SEEDS = (42, 43, 44)
 
 
@@ -46,7 +46,7 @@ def simulate(rng):
 def block_align(x, y, mt, mm, g):
     """Fixed-size block DP: X is cut into blocks of B; each block is aligned to a Y window
     that starts where the previous block ended. Unaligned residues (leading, internal and
-    trailing) are all charged the gap penalty g, so the DP objective matches the reference
+    trailing) are all charged the gap penalty g (g < 0), so the DP objective matches the reference
     score used in features(). Only the end column in Y is chosen freely (best end cell)."""
     pairs, p = [], 0
     for bs in range(0, len(x), B):
@@ -218,9 +218,10 @@ def main():
         "notes": ("Simulated data only; the paper's own dataset and reported result are not used. "
                   "The block DP is a simplified stand-in for the paper's near-optimal block search "
                   "(fixed-size X blocks, semi-global Y windows, candidates from 8 scoring variants). "
-                  "Block DP now charges leading unaligned Y residues with the gap penalty, matching the "
-                  "reference score; previously they were free, so candidates scored far below the optimum "
-                  "and no pair passed the near-optimal filter. "
+                  "Block DP charges leading unaligned Y residues with the gap penalty, matching the "
+                  "reference score. The DP gap penalties are now negative (g = -1..-4), as required for "
+                  "a penalty; previously they were positive, which rewarded gaps and made every candidate "
+                  "fall far below the optimum, so no pair passed the near-optimal filter. "
                   "Labels use the true simulated alignment, which is only available in simulation. "
                   "Near-optimal threshold THETA was fixed a priori, not tuned. "
                   "Baseline is deterministic, so its std is 0 by construction. Split is by pair, not stratified."),

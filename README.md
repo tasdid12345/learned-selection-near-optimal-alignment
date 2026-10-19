@@ -2,19 +2,22 @@
 
 Question: can a learned, checkable selection criterion pick better alignments from a set of near-optimal block alignments than the highest raw alignment score?
 
-How to run:
+## Method
+- Simulate 400 ancestor-descendant DNA pairs (numpy, seed 42).
+- For each pair, run block-based DP under 8 scoring variants; keep candidates within 10 points of the global optimum.
+- Baseline: pick the highest raw-score candidate.
+- Improved: re-rank candidates with a class-balanced classifier (logistic regression or LightGBM) chosen by 5-fold CV on the training pairs only.
+- Metric: fraction of true homologous residue pairs recovered on a held-out 25% pair split.
 
-    pip install -r requirements.txt
-    python analysis.py
+## Fix applied
+The block DP was given positive gap values (1..4), which rewarded gaps. Every candidate then scored far below the optimum, so no pair passed the near-optimal filter and the script exited. The gap penalties are now negative (-1..-4). Nothing else in the baseline, evaluation, split or test set was changed.
 
-The script simulates 400 ancestor-descendant DNA pairs (seed 42), builds block-DP candidate alignments within a near-optimal threshold of the global optimum, and compares two selectors on a held-out 25% of pairs:
-
-- Baseline: highest raw-score candidate.
-- Improved: a class-balanced classifier (logistic regression or LightGBM, chosen by 5-fold CV on the training pairs) that re-ranks the same candidates.
-
-Outputs: `results.json` (metrics and notes) and `figures/accuracy_comparison.png`.
-
-Fix note: the block DP now charges leading unaligned Y residues with the gap penalty, consistent with the reference score. Before this, no candidate passed the near-optimal filter, so the script exited with 0 pairs kept.
+## Run
+```
+pip install -r requirements.txt
+python analysis.py
+```
+Outputs `results.json` and `figures/accuracy_comparison.png`.
 
 ## Reference
 
