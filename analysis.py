@@ -44,21 +44,23 @@ def simulate(rng):
 
 
 def block_align(x, y, mt, mm, g):
-    """Fixed-size block DP: X is cut into blocks of B; each block is aligned semi-globally
-    to a Y window that starts where the previous block ended (free ends in Y)."""
+    """Fixed-size block DP: X is cut into blocks of B; each block is aligned to a Y window
+    that starts where the previous block ended. Unaligned residues (leading, internal and
+    trailing) are all charged the gap penalty g, so the DP objective matches the reference
+    score used in features(). Only the end column in Y is chosen freely (best end cell)."""
     pairs, p = [], 0
     for bs in range(0, len(x), B):
         xb = x[bs:bs + B]
         yb = y[p:min(len(y), p + len(xb) + W)]
         k, q = len(xb), len(yb)
-        F = [[0] * (q + 1)]                            # free start in Y
+        F = [[g * j for j in range(q + 1)]]            # leading Y residues are charged (no free start)
         for i in range(1, k + 1):
             row = [g * i] + [0] * q
             for j in range(1, q + 1):
                 s = mt if xb[i - 1] == yb[j - 1] else mm
                 row[j] = max(F[i - 1][j - 1] + s, F[i - 1][j] + g, row[j - 1] + g)
             F.append(row)
-        jend = max(range(q + 1), key=lambda t: F[k][t])  # free end in Y
+        jend = max(range(q + 1), key=lambda t: F[k][t])  # end in Y (trailing residues already charged)
         i, j = k, jend
         while i > 0:                                   # traceback
             if j > 0 and F[i][j] == F[i - 1][j - 1] + (mt if xb[i - 1] == yb[j - 1] else mm):
@@ -216,6 +218,9 @@ def main():
         "notes": ("Simulated data only; the paper's own dataset and reported result are not used. "
                   "The block DP is a simplified stand-in for the paper's near-optimal block search "
                   "(fixed-size X blocks, semi-global Y windows, candidates from 8 scoring variants). "
+                  "Block DP now charges leading unaligned Y residues with the gap penalty, matching the "
+                  "reference score; previously they were free, so candidates scored far below the optimum "
+                  "and no pair passed the near-optimal filter. "
                   "Labels use the true simulated alignment, which is only available in simulation. "
                   "Near-optimal threshold THETA was fixed a priori, not tuned. "
                   "Baseline is deterministic, so its std is 0 by construction. Split is by pair, not stratified."),

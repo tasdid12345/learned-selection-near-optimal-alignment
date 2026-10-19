@@ -1,21 +1,20 @@
 # Learned re-ranking of near-optimal block alignments
 
-Motivation: The paper "Near-optimal block alignments" argues that searching for several near-optimal alignments, rather than only the single mathematically optimal one, is useful. Once such a set of candidates exists, something must still choose among them, and the usual default is the candidate with the highest raw alignment score. This experiment checks whether a simple, learned and checkable criterion can choose better.
-
-Question: Can a learned, checkable selection criterion pick better alignments from a set of near-optimal block alignments than the standard choice of highest raw alignment score?
-
-Dataset: Simulated DNA sequence pairs. Random ancestral sequences are mutated (substitutions and short indels) to give two descendants with known true homologous residue pairs. The data are generated with numpy, seed 42. This is not the paper's own dataset.
-
-Baseline: For each pair, a block-based dynamic program (fixed-size blocks, several scoring variants) produces candidate alignments within a threshold of the optimum. The baseline returns the candidate with the highest raw score.
-
-Improved model: The same candidates are re-ranked by a class-balanced logistic regression or LightGBM classifier. It uses per-candidate features (gap count, gap-length spread, block identity, score margin to the optimum). The model is chosen by 5-fold cross-validation on the training pairs only. The test set is used once.
+Question: can a learned, checkable selection criterion pick better alignments from a set of near-optimal block alignments than the highest raw alignment score?
 
 How to run:
 
     pip install -r requirements.txt
     python analysis.py
 
-Results: results are written to results.json (and figures/accuracy_comparison.png).
+The script simulates 400 ancestor-descendant DNA pairs (seed 42), builds block-DP candidate alignments within a near-optimal threshold of the global optimum, and compares two selectors on a held-out 25% of pairs:
+
+- Baseline: highest raw-score candidate.
+- Improved: a class-balanced classifier (logistic regression or LightGBM, chosen by 5-fold CV on the training pairs) that re-ranks the same candidates.
+
+Outputs: `results.json` (metrics and notes) and `figures/accuracy_comparison.png`.
+
+Fix note: the block DP now charges leading unaligned Y residues with the gap penalty, consistent with the reference score. Before this, no candidate passed the near-optimal filter, so the script exited with 0 pairs kept.
 
 ## Reference
 
