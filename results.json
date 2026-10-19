@@ -1,0 +1,35 @@
+{
+  "question": "Can a learned, checkable selection criterion pick better alignments from a set of near-optimal block alignments than the standard choice of highest raw alignment score?",
+  "method": "Simulated DNA pairs; block-based DP candidates within a threshold of the optimum; baseline picks highest raw score; improved re-ranks candidates with a CV-selected class-balanced classifier.",
+  "dataset": {
+    "name": "Simulated ancestor-descendant DNA pairs (numpy, seed 42)",
+    "source_url": "numpy random simulation (no download)",
+    "n_rows": 355,
+    "n_train": 266,
+    "n_test": 89,
+    "same_as_paper": false,
+    "baseline_is_papers_method": false
+  },
+  "metric_name": "alignment accuracy (fraction of true homologous residue pairs recovered)",
+  "higher_is_better": true,
+  "baseline": "Highest raw-score candidate among block-DP near-optimal alignments (no explicit selection rule).",
+  "improved": "Same candidates re-ranked by lr_C1 (class-balanced) on gap count, gap-length spread, block identity, score margin and alignment size; chosen by 5-fold CV on training pairs.",
+  "metrics": {
+    "baseline_score": 0.8226938714715313,
+    "improved_score": 0.8230386042771151,
+    "improvement": 0.0003447328055837806,
+    "baseline_score_std": 1.1102230246251565e-16,
+    "improved_score_std": 0.0,
+    "baseline_correct_residues": 157.76404494382024,
+    "improved_correct_residues": 157.8314606741573,
+    "baseline_select_time_s": 0.00017159299999036648,
+    "improved_select_time_s": 0.023494728666667204,
+    "oracle_score": 0.8313055210189103,
+    "mean_candidates_per_pair": 2.5280898876404496,
+    "n_pairs_dropped": 45.0,
+    "cv_lr_C0.1": 0.834693660667915,
+    "cv_lr_C1": 0.8347335927833187,
+    "cv_lgbm": 0.8324944776073664
+  },
+  "notes": "Simulated data only; the paper's own dataset and reported result are not used. The block DP is a simplified stand-in for the paper's near-optimal block search (fixed-size X blocks, semi-global Y windows, candidates from 8 scoring variants). Block DP charges leading unaligned Y residues with the gap penalty, matching the reference score. The DP gap penalties are now negative (g = -1..-4), as required for a penalty; previously they were positive, which rewarded gaps and made every candidate fall far below the optimum, so no pair passed the near-optimal filter. Labels use the true simulated alignment, which is only available in simulation. Near-optimal threshold THETA was fixed a priori, not tuned. Baseline is deterministic, so its std is 0 by construction. Split is by pair, not stratified."
+}
